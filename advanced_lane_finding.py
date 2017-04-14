@@ -30,7 +30,7 @@ for fname in images:
 
     # If found, add object points, image points
     if ret == True:
-        objpoints.append(obj)
+        objpoints.append(objp)
         imgpoints.append(corners)
 
         # Draw and display the corners
@@ -129,7 +129,7 @@ def pipeline(img, s_thresh=(170, 255), sx_thresh=(20, 100)):
     combined_binary[(s_binary == 1) | (sxbinary == 1)] = 1
     return combined_binary
 
-transformed = pipeline(undistort_img(cv2.imread('./test_images/test2.jpg')),
+transformed = pipeline(undistort_img(cv2.imread('./test_images/straight_lines1.jpg')),
                        sx_thresh=(20, 255), s_thresh=(170, 255))
 
 
@@ -158,35 +158,49 @@ def warper(img, src, dst):
     return warped
 
 
-image = undistort_img(cv2.imread('./test_images/test2.jpg'))
+image = undistort_img(cv2.imread('./test_images/straight_lines1.jpg'))
 
 # calculate the source dimensions by approximating the dimensions
 # of the polynomial the covers the lane and its lines
-img_size = np.shape(image)
-ht_window = np.uint(img_size[0] / 1.5)
-hb_window = np.uint(img_size[0])
-c_window = np.uint(img_size[1] / 2)
-ctl_window = c_window - .2 * np.uint(img_size[1] / 2)
-ctr_window = c_window + .2 * np.uint(img_size[1] / 2)
-cbl_window = c_window - 1 * np.uint(img_size[1] / 2)
-cbr_window = c_window + 1 * np.uint(img_size[1] / 2)
+# img_size = np.shape(image)
+# ht_window = np.uint(img_size[0] / 1.5)
+# hb_window = np.uint(img_size[0])
+# c_window = np.uint(img_size[1] / 2)
+# ctl_window = c_window - .2 * np.uint(img_size[1] / 2)
+# ctr_window = c_window + .2 * np.uint(img_size[1] / 2)
+# cbl_window = c_window - 1 * np.uint(img_size[1] / 2)
+# cbr_window = c_window + 1 * np.uint(img_size[1] / 2)
 
-src = np.float32([[cbl_window, hb_window], [cbr_window, hb_window], [
-                 ctr_window, ht_window], [ctl_window, ht_window]])
+# src = np.float32([[cbl_window, hb_window], [cbr_window, hb_window], [
+#                  ctr_window, ht_window], [ctl_window, ht_window]])
 
-# this is simply the projection dimension target
-dst = np.float32([[0, img_size[0]], [img_size[1], img_size[0]],
-                  [img_size[1], 0], [0, 0]])
+# # this is simply the projection dimension target
+# dst = np.float32([[0, img_size[0]], [img_size[1], img_size[0]],
+#                   [img_size[1], 0], [0, 0]])
+
+(h, w) = (image.shape[0], image.shape[1])
+src = np.float32([[w // 2 - 76, h * .625], [w // 2 + 76, h * .625], [-100, h], [w + 100, h]])
+# Define corresponding destination points
+dst = np.float32([[100, 0], [w - 100, 0], [100, h], [w - 100, h]])
 
 imshape = image.shape
 # vertices = np.array([[(0, imshape[0]), (imshape[1], imshape[0]), (imshape[1], 0),
 #                       (0, 0)]], dtype=np.int32)
 
-vertices = np.array([[(cbl_window, hb_window), (cbr_window, hb_window), (ctr_window, ht_window),
-                      (ctl_window, ht_window)]], dtype=np.int32)
+# vertices = np.array([[(cbl_window, hb_window), (cbr_window, hb_window), (ctr_window, ht_window),
+#                       (ctl_window, ht_window)]], dtype=np.int32)
 
+vertices = np.array([
+    [
+        (w // 2 - 76, h * .625), 
+        (w // 2 + 76, h * .625), 
+        (w + 100, h),
+        (-100, h) 
+    ]
+], dtype=np.int32)
+
+print(vertices)
 # vertices = np.array(src)
-
 # print(vertices)
 # print(img_size)
 cv2.polylines(image, vertices, True, [255, 0, 255], 4)
@@ -203,7 +217,7 @@ ax1.imshow(image)
 # graph of the outcome
 ##
 #%%
-image = pipeline(undistort_img(cv2.imread('./test_images/test2.jpg')))
+image = pipeline(undistort_img(cv2.imread('./test_images/straight_lines1.jpg')))
 warped = warper(image, src, dst)
 f, (ax1) = plt.subplots(1, figsize=(24, 9))
 ax1.imshow(warped, cmap="gray")
@@ -215,9 +229,10 @@ ax1.imshow(warped, cmap="gray")
 histogram = np.sum(warped[360:, :], axis=0)
 plt.plot(histogram)
 
+##
+# sliding window search
+##
 #%%
-
-
 def windows(binary_warped):
     """
     takes a warped image and return of tuple of (left lane indices, right lane indices)  
