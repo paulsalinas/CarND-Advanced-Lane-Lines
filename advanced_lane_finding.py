@@ -1,4 +1,7 @@
-
+##
+# for each correspondinog object points, obtain the corresponding image points for the corners
+# add some visualization for each channel
+##
 #%%
 import numpy as np
 import cv2
@@ -27,19 +30,21 @@ for fname in images:
 
     # If found, add object points, image points
     if ret == True:
-        objpoints.append(objp)
+        objpoints.append(obj)
         imgpoints.append(corners)
 
         # Draw and display the corners
         img = cv2.drawChessboardCorners(img, (9, 6), corners, ret)
         cv2.imshow('img', img)
-        cv2.waitKey(50)
+        cv2.waitKey(20)
 
 cv2.destroyAllWindows()
 
 ##
 # Apply the objpoints and imgpoints to get the calibration results
+# Use the calibration results to undistort a test image. Visualize the result 
 ##
+#%%
 import pickle
 %matplotlib inline
 
@@ -51,11 +56,9 @@ img_size = (img.shape[1], img.shape[0])
 ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
     objpoints, imgpoints, img_size, None, None)
 
+dst = cv2.undistort(img, mtx, dist, None, mtx)
+cv2.imwrite('./test_undist.jpg',dst)
 
-cv2.imwrite('./test_undist.jpg', dst)
-cv2.imwrite('./test_undist.jpg', dst)
-# Save the camera calibration result for later use (we won't worry about
-# rvecs / tvecs)
 # Save the camera calibration result for later use (we won't worry about
 # rvecs / tvecs)
 dist_pickle = {}
@@ -74,8 +77,13 @@ ax2.imshow(dst)
 ax2.set_title('Undistorted Image', fontsize=30)
 
 ##
-# Apply undistort to the images
+# define the pipeline and visualize the end result.
+# steps in the pipeline:
+# 1) undistort
+# 2) Apply a sobel threshold filter
+# 3) Apply a collor channel filter
 ##
+
 #%%
 dist = pickle.load(open("./wide_dist_pickle.p", "rb"))["dist"]
 mtx = pickle.load(open("./wide_dist_pickle.p", "rb"))["mtx"]
@@ -83,7 +91,6 @@ mtx = pickle.load(open("./wide_dist_pickle.p", "rb"))["mtx"]
 
 def undistort_img(img):
     return cv2.undistort(img, mtx, dist, None, mtx)
-
 
 # Edit this function to create your own pipeline.
 
@@ -122,16 +129,7 @@ def pipeline(img, s_thresh=(170, 255), sx_thresh=(20, 100)):
     combined_binary[(s_binary == 1) | (sxbinary == 1)] = 1
     return combined_binary
 
-
-# test_images = glob.glob('./test_images/test*.jpg')
-# for img in test_images:
-#     transformed = pipeline(undistort_img(cv2.imread(img)),
-#                            sx_thresh=(20, 255), s_thresh=(170, 255))
-#     plt.subplot(1, 2, 2)
-#     plt.imshow(transformed, cmap='gray')
-#     plt.axis('off')
-
-transformed = pipeline(undistort_img(cv2.imread('./test_images/test3.jpg')),
+transformed = pipeline(undistort_img(cv2.imread('./test_images/test2.jpg')),
                        sx_thresh=(20, 255), s_thresh=(170, 255))
 
 
@@ -140,9 +138,12 @@ f, (ax2) = plt.subplots(1, figsize=(24, 9))
 f.tight_layout()
 ax2.imshow(transformed, cmap='gray')
 
+
+##
+# define a warping function.
+# visualize the region of interest and the warped result
+##
 #%%
-
-
 def warper(img, src, dst):
     """
     warp the given image given the source dimensions and destination dimensionså
@@ -157,7 +158,7 @@ def warper(img, src, dst):
     return warped
 
 
-image = undistort_img(cv2.imread('./test_images/test3.jpg'))
+image = undistort_img(cv2.imread('./test_images/test2.jpg'))
 
 # calculate the source dimensions by approximating the dimensions
 # of the polynomial the covers the lane and its lines
@@ -200,7 +201,7 @@ ax1.imshow(image)
 # combine the pipeline and then the warping of the image
 # graph of the outcome
 #%%
-image = pipeline(undistort_img(cv2.imread('./test_images/test3.jpg')))
+image = pipeline(undistort_img(cv2.imread('./test_images/test2.jpg')))
 warped = warper(image, src, dst)
 f, (ax1) = plt.subplots(1, figsize=(24, 9))
 ax1.imshow(warped, cmap="gray")
