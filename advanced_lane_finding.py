@@ -198,15 +198,19 @@ f.tight_layout()
 ax2.imshow(warped)
 ax1.imshow(image)
 
+##
 # combine the pipeline and then the warping of the image
 # graph of the outcome
+##
 #%%
 image = pipeline(undistort_img(cv2.imread('./test_images/test2.jpg')))
 warped = warper(image, src, dst)
 f, (ax1) = plt.subplots(1, figsize=(24, 9))
 ax1.imshow(warped, cmap="gray")
 
+##
 # show a histogram of a cross section of the image
+##
 #%%
 histogram = np.sum(warped[360:, :], axis=0)
 plt.plot(histogram)
