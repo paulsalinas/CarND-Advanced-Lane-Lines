@@ -7,38 +7,12 @@ import numpy as np
 import cv2
 import glob
 import matplotlib.pyplot as plt
+
+from utils import get_calibration_points, undistorter_from_pickle
 %matplotlib qt
 
-# prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
-objp = np.zeros((6 * 9, 3), np.float32)
-objp[:, :2] = np.mgrid[0:9, 0:6].T.reshape(-1, 2)
-
-# Arrays to store object points and image points from all the images.
-objpoints = []  # 3d points in real world space
-imgpoints = []  # 2d points in image plane.
-
-# Make a list of calibration images
-images = glob.glob('./camera_cal/calibration*.jpg')
-
-# Step through the list and search for chessboard corners
-for fname in images:
-    img = cv2.imread(fname)
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
-    # Find the chessboard corners
-    ret, corners = cv2.findChessboardCorners(gray, (9, 6), None)
-
-    # If found, add object points, image points
-    if ret == True:
-        objpoints.append(objp)
-        imgpoints.append(corners)
-
-        # Draw and display the corners
-        img = cv2.drawChessboardCorners(img, (9, 6), corners, ret)
-        cv2.imshow('img', img)
-        cv2.waitKey(20)
-
-cv2.destroyAllWindows()
+objpoints, imgpoints = get_calibration_points()
+print(objpoints, imgpoints)
 
 ##
 # Apply the objpoints and imgpoints to get the calibration results
@@ -54,27 +28,31 @@ img_size = (img.shape[1], img.shape[0])
 
 # Do camera calibration given object points and image points
 ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
-    objpoints, imgpoints, img_size, None, None)
-
-dst = cv2.undistort(img, mtx, dist, None, mtx)
-cv2.imwrite('./test_undist.jpg',dst)
+    objpoints,
+    imgpoints,
+    img_size,
+    None,
+    None)
 
 # Save the camera calibration result for later use (we won't worry about
 # rvecs / tvecs)
+pickle_path = "./wide_dist_pickle.p"
 dist_pickle = {}
 dist_pickle["dist"] = dist
 dist_pickle["mtx"] = mtx
-pickle.dump(dist_pickle, open("./wide_dist_pickle.p", "wb"))
-
-f, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 10))
+pickle.dump(dist_pickle, open(pickle_path, "wb"))
 
 # Visualize undistortion
+
+undistort_image = undistorter_from_pickle(pickle_path)
+dst = undistort_image(img)
 
 f, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 10))
 ax1.imshow(img)
 ax1.set_title('Original Image', fontsize=30)
 ax2.imshow(dst)
 ax2.set_title('Undistorted Image', fontsize=30)
+
 
 ##
 # define the pipeline and visualize the end result.
@@ -83,16 +61,12 @@ ax2.set_title('Undistorted Image', fontsize=30)
 # 2) Apply a sobel threshold filter
 # 3) Apply a collor channel filter
 ##
+# Edit this function to create your own pipeline.
 
 #%%
-dist = pickle.load(open("./wide_dist_pickle.p", "rb"))["dist"]
-mtx = pickle.load(open("./wide_dist_pickle.p", "rb"))["mtx"]
 
-
-def undistort_img(img):
-    return cv2.undistort(img, mtx, dist, None, mtx)
-
-# Edit this function to create your own pipeline.
+# undistort func from pickle
+undistort_img = undistorter_from_pickle(pickle_path)
 
 def pipeline(img, s_thresh=(170, 255), sx_thresh=(20, 100)):
     """
