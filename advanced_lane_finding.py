@@ -144,6 +144,10 @@ visualize_sliding_window(
     ploty
 )
 
+print(left_lane_inds)
+print(nonzerox)
+print(left_fit)
+
 #%%
 
 from utils import next_frame

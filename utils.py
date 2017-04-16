@@ -263,11 +263,11 @@ def sliding_windows(binary_warped):
 
     # ploty = np.linspace(0, binary_warped.shape[0] - 1, binary_warped.shape[0])
 
-    left_fitx, right_fitx, ploty = get_drawable_lanes(
-        left_fit,
-        right_fit,
-        binary_warped.shape
-    )
+    # left_fitx, right_fitx, ploty = get_drawable_lanes(
+    #     left_fit,
+    #     right_fit,
+    #     binary_warped.shape
+    # )
 
     return out_img, nonzerox, nonzeroy, left_lane_inds, right_lane_inds, left_fit, right_fit
 
