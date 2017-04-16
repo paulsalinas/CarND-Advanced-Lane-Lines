@@ -124,10 +124,32 @@ plt.plot(histogram)
 #%%
 
 
-def windows(binary_warped):
+def get_drawable_lanes(left_fit, right_fit, binary_warped_shape):
+    ploty = np.linspace(0, binary_warped_shape[0] - 1, binary_warped_shape[0])
+
+    # drawable left_fit and right_fit
+    left_fitx = left_fit[0] * ploty**2 + left_fit[1] * ploty + left_fit[2]
+    right_fitx = right_fit[0] * ploty**2 + right_fit[1] * ploty + right_fit[2]
+    return left_fitx, right_fitx, ploty
+
+
+def visualize_sliding_window(out_img, nonzerox, nonzeroy, left_fitx, right_fitx, ploty):
+    # plot this seperately
+    out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]
+    out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 255]
+
+    plt.imshow(out_img)
+    plt.plot(left_fitx, ploty, color='yellow')
+    plt.plot(right_fitx, ploty, color='yellow')
+    plt.xlim(0, 1280)
+    plt.ylim(720, 0)
+
+
+def sliding_windows(binary_warped):
     """
     takes a warped image and return of tuple of (left lane indices, right lane indices)  
     """
+
     # Assuming you have created a warped binary image called "binary_warped"
     # Take a histogram of the bottom half of the image
     histogram = np.sum(
@@ -135,6 +157,7 @@ def windows(binary_warped):
 
     # Create an output image to draw on and  visualize the result
     out_img = np.dstack((binary_warped, binary_warped, binary_warped)) * 255
+
     # Find the peak of the left and right halves of the histogram
     # These will be the starting point for the left and right lines
     midpoint = np.int(histogram.shape[0] / 2)
@@ -174,14 +197,22 @@ def windows(binary_warped):
                       (win_xleft_high, win_y_high), (0, 255, 0), 2)
         cv2.rectangle(out_img, (win_xright_low, win_y_low),
                       (win_xright_high, win_y_high), (0, 255, 0), 2)
+
         # Identify the nonzero pixels in x and y within the window
-        good_left_inds = ((nonzeroy >= win_y_low) & (nonzeroy < win_y_high) & (
-            nonzerox >= win_xleft_low) & (nonzerox < win_xleft_high)).nonzero()[0]
-        good_right_inds = ((nonzeroy >= win_y_low) & (nonzeroy < win_y_high) & (
-            nonzerox >= win_xright_low) & (nonzerox < win_xright_high)).nonzero()[0]
+        good_left_inds = (
+            (nonzeroy >= win_y_low) & (nonzeroy < win_y_high) &
+            (nonzerox >= win_xleft_low) & (nonzerox < win_xleft_high)
+        ).nonzero()[0]
+
+        good_right_inds = (
+            (nonzeroy >= win_y_low) & (nonzeroy < win_y_high) &
+            (nonzerox >= win_xright_low) & (nonzerox < win_xright_high)
+        ).nonzero()[0]
+
         # Append these indices to the lists
         left_lane_inds.append(good_left_inds)
         right_lane_inds.append(good_right_inds)
+
         # If you found > minpix pixels, recenter next window on their mean
         # position
         if len(good_left_inds) > minpix:
@@ -203,24 +234,27 @@ def windows(binary_warped):
     left_fit = np.polyfit(lefty, leftx, 2)
     right_fit = np.polyfit(righty, rightx, 2)
 
-    ploty = np.linspace(0, binary_warped.shape[0] - 1, binary_warped.shape[0])
+    # ploty = np.linspace(0, binary_warped.shape[0] - 1, binary_warped.shape[0])
 
-    left_fitx = left_fit[0] * ploty**2 + left_fit[1] * ploty + left_fit[2]
-    right_fitx = right_fit[0] * ploty**2 + right_fit[1] * ploty + right_fit[2]
+    left_fitx, right_fitx, ploty = get_drawable_lanes(
+        left_fit,
+        right_fit,
+        binary_warped.shape
+    )
 
-    # plot this seperately
-    out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]
-    out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 255]
-    plt.imshow(out_img)
-    plt.plot(left_fitx, ploty, color='yellow')
-    plt.plot(right_fitx, ploty, color='yellow')
-    plt.xlim(0, 1280)
-    plt.ylim(720, 0)
+    visualize_sliding_window(
+        out_img,
+        nonzerox,
+        nonzeroy,
+        left_fitx,
+        right_fitx,
+        ploty
+    )
 
     return left_fitx, right_fitx, left_lane_inds, right_lane_inds, left_fit, right_fit
 
 
-leftx, rightx, left_lane_inds, right_lane_inds, left_fit, right_fit = windows(
+leftx, rightx, left_lane_inds, right_lane_inds, left_fit, right_fit = sliding_windows(
     warped)
 
 #%%
