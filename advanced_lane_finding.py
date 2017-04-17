@@ -116,7 +116,8 @@ ax1.imshow(warped, cmap="gray")
 ##
 #%%
 histogram = np.sum(warped[360:, :], axis=0)
-plt.plot(histogram)
+f, (ax1) = plt.subplots(1, figsize=(24, 9))
+ax1.plot(histogram)
 
 ##
 # sliding window search
@@ -157,6 +158,13 @@ left_fitx, right_fitx, left_fit, right_fit = next_frame(
     right_fit,
     warped
 )
+
+#%%
+from utils import visualize_lines_on_image
+
+result = visualize_lines_on_image(ploty, left_fitx, right_fitx, warped)
+plt.imshow(result)
+
 
 #%%
 
@@ -217,20 +225,22 @@ def visualize_next_step(left_fitx, right_fitx, left_lane_inds, right_lane_inds, 
 
     result = cv2.addWeighted(out_img, 1, window_img, 0.3, 0)
 
-    plt.imshow(result)
-    plt.plot(left_fitx, ploty, color='yellow')
-    plt.plot(right_fitx, ploty, color='yellow')
-    plt.xlim(0, 1280)
-    plt.ylim(720, 0)
+    return result
 
 
-visualize_next_step(
+result = visualize_next_step(
     left_fitx,
     right_fitx,
     left_lane_inds,
     right_lane_inds,
     warped
 )
+
+plt.imshow(result)
+plt.plot(left_fitx, ploty, color='yellow')
+plt.plot(right_fitx, ploty, color='yellow')
+plt.xlim(0, 1280)
+plt.ylim(720, 0)
 
 #%%
 

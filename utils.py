@@ -154,11 +154,13 @@ def visualize_sliding_window(out_img, left_lane_inds, right_lane_inds, nonzerox,
     out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]
     out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 255]
 
-    plt.imshow(out_img)
-    plt.plot(left_fitx, ploty, color='yellow')
-    plt.plot(right_fitx, ploty, color='yellow')
-    plt.xlim(0, 1280)
-    plt.ylim(720, 0)
+    f, (ax1) = plt.subplots(1, figsize=(24, 9))
+
+    ax1.imshow(out_img)
+    ax1.plot(left_fitx, ploty, color='yellow')
+    ax1.plot(right_fitx, ploty, color='yellow')
+    ax1.xlim(0, 1280)
+    ax1.ylim(720, 0)
 
 
 # def get_lane_polyfit(nonzerox, nonzeroy, )
@@ -314,3 +316,107 @@ def next_frame(left_fit, right_fit, binary_warped):
     right_fitx = right_fit[0] * ploty**2 + right_fit[1] * ploty + right_fit[2]
 
     return left_fitx, right_fitx, left_fit, right_fit
+
+
+def draw_lines_on_warped(warped, left_fitx, right_fitx):
+    nonzero = binary_warped.nonzero()
+    nonzeroy = np.array(nonzero[0])
+    nonzerox = np.array(nonzero[1])
+
+    # Set the width of the windows +/- margin
+    margin = 100
+
+    # Set minimum number of pixels found to recenter window
+    minpix = 50
+
+    ploty = np.linspace(0, binary_warped.shape[0] - 1, binary_warped.shape[0])
+
+    out_img = np.dstack((binary_warped, binary_warped, binary_warped)) * 255
+
+    window_img = np.zeros_like(out_img)
+
+    # Color in left and right line pixels
+    out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]
+    out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 255]
+
+    # Generate a polygon to illustrate the search window area
+    # And recast the x and y points into usable format for cv2.fillPoly()
+    left_line_window1 = np.array(
+        [np.transpose(
+            np.vstack([left_fitx - margin, ploty])
+        )]
+    )
+
+    left_line_window2 = np.array(
+        [np.flipud(
+            np.transpose(
+                np.vstack([left_fitx + margin, ploty])
+            )
+        )]
+    )
+
+    left_line_pts = np.hstack((left_line_window1, left_line_window2))
+    right_line_window1 = np.array(
+        [np.transpose(np.vstack([right_fitx - margin, ploty]))]
+    )
+
+    right_line_window2 = np.array(
+        [np.flipud(
+            np.transpose(np.vstack([right_fitx + margin, ploty]))
+        )]
+    )
+
+    right_line_pts = np.hstack((right_line_window1, right_line_window2))
+
+    # Draw the lane onto the warped blank image
+    cv2.fillPoly(window_img, np.int_([left_line_pts]), (0, 255, 0))
+    cv2.fillPoly(window_img, np.int_([right_line_pts]), (0, 255, 0))
+
+    result = cv2.addWeighted(out_img, 1, window_img, 0.3, 0)
+
+    plt.imshow(result)
+    plt.plot(left_fitx, ploty, color='yellow')
+    plt.plot(right_fitx, ploty, color='yellow')
+    plt.xlim(0, 1280)
+    plt.ylim(720, 0)
+
+
+def visualize_lines_on_image(ploty, left_fitx, right_fitx, binary_warped):
+    out_img = np.dstack((binary_warped, binary_warped, binary_warped)) * 255
+    window_img = np.zeros_like(out_img)
+    margin = 100
+
+    left_line_window1 = np.array(
+        [np.transpose(
+            np.vstack([left_fitx - margin, ploty])
+        )]
+    )
+
+    left_line_window2 = np.array(
+        [np.flipud(
+            np.transpose(
+                np.vstack([left_fitx + margin, ploty])
+            )
+        )]
+    )
+
+    left_line_pts = np.hstack((left_line_window1, left_line_window2))
+    right_line_window1 = np.array(
+        [np.transpose(np.vstack([right_fitx - margin, ploty]))]
+    )
+
+    right_line_window2 = np.array(
+        [np.flipud(
+            np.transpose(np.vstack([right_fitx + margin, ploty]))
+        )]
+    )
+
+    right_line_pts = np.hstack((right_line_window1, right_line_window2))
+
+    # Draw the lane onto the warped blank image
+    cv2.fillPoly(window_img, np.int_([left_line_pts]), (0, 255, 0))
+    cv2.fillPoly(window_img, np.int_([right_line_pts]), (0, 255, 0))
+
+    result = cv2.addWeighted(out_img, 1, window_img, 0.3, 0)
+
+    return result
