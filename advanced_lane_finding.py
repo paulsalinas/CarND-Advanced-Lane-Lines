@@ -150,6 +150,10 @@ print(nonzerox)
 print(left_fit)
 
 #%%
+from utils import sliding_windows_lane_pixels
+print(sliding_windows_lane_pixels(warped))
+
+#%%
 
 from utils import next_frame
 
