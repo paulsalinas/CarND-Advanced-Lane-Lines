@@ -527,5 +527,6 @@ def visualize_next_step(left_fitx, right_fitx, left_lane_inds, right_lane_inds, 
 
 
 def get_curvature(poly_fit):
+    ploty = np.linspace(0, 719, num=720)
     y_eval = np.max(ploty)
     return ((1 + (2 * poly_fit[0] * y_eval + poly_fit[1])**2)**1.5) / np.absolute(2 * poly_fit[0])
