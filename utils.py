@@ -88,14 +88,34 @@ def get_distortion_vertices_from_image_shape(image_shape):
     """
     get the region of interest for distortion usually for visualization
     """
-    (h, w) = (image_shape[0], image_shape[1])
+    # (h, w) = (image_shape[0], image_shape[1])
+
+    # vertices = np.array([
+    #     [
+    #         (w // 2 - 76, h * .625),
+    #         (w // 2 + 76, h * .625),
+    #         (w + 100, h),
+    #         (-100, h)
+    #     ]
+    # ], dtype=np.int32)
+
+    img_size = image_shape
+
+    ht_window = np.uint(img_size[0] / 1.5)
+    hb_window = np.uint(img_size[0])
+    c_window = np.uint(img_size[1] / 2)
+
+    ctl_window = c_window - .2 * np.uint(img_size[1] / 2)
+    ctr_window = c_window + .2 * np.uint(img_size[1] / 2)
+    cbl_window = c_window - 1 * np.uint(img_size[1] / 2)
+    cbr_window = c_window + 1 * np.uint(img_size[1] / 2)
 
     vertices = np.array([
         [
-            (w // 2 - 76, h * .625),
-            (w // 2 + 76, h * .625),
-            (w + 100, h),
-            (-100, h)
+            (cbl_window, hb_window),
+            (cbr_window, hb_window),
+            (ctr_window, ht_window),
+            (ctl_window, ht_window)
         ]
     ], dtype=np.int32)
 
@@ -103,17 +123,42 @@ def get_distortion_vertices_from_image_shape(image_shape):
 
 
 def get_distortion_shape_from_image_shape(image_shape):
-    (h, w) = (image_shape[0], image_shape[1])
+    # (h, w) = (image_shape[0], image_shape[1])
+
+    img_size = image_shape
+
+    ht_window = np.uint(img_size[0] / 1.5)
+    hb_window = np.uint(img_size[0])
+    c_window = np.uint(img_size[1] / 2)
+
+    ctl_window = c_window - .2 * np.uint(img_size[1] / 2)
+    ctr_window = c_window + .2 * np.uint(img_size[1] / 2)
+    cbl_window = c_window - 1 * np.uint(img_size[1] / 2)
+    cbr_window = c_window + 1 * np.uint(img_size[1] / 2)
 
     src = np.float32([
-        [w // 2 - 76, h * .625],
-        [w // 2 + 76, h * .625],
-        [-100, h],
-        [w + 100, h]
+        [cbl_window, hb_window],
+        [cbr_window, hb_window],
+        [ctr_window, ht_window],
+        [ctl_window, ht_window]
     ])
 
-    # Define corresponding destination points
-    dst = np.float32([[100, 0], [w - 100, 0], [100, h], [w - 100, h]])
+    dst = np.float32([
+        [0, img_size[0]],
+        [img_size[1], img_size[0]],
+        [img_size[1], 0],
+        [0, 0]
+    ])
+
+    # src = np.float32([
+    #     [w // 2 - 76, h * .625],
+    #     [w // 2 + 76, h * .625],
+    #     [-100, h],
+    #     [w + 100, h]
+    # ])
+
+    # # Define corresponding destination points
+    # dst = np.float32([[100, 0], [w - 100, 0], [100, h], [w - 100, h]])
 
     return src, dst
 
@@ -154,13 +199,13 @@ def visualize_sliding_window(out_img, left_lane_inds, right_lane_inds, nonzerox,
     out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]
     out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 255]
 
-    f, (ax1) = plt.subplots(1, figsize=(24, 9))
+    # f, (ax1) = plt.subplots(1, figsize=(24, 9))
 
-    ax1.imshow(out_img)
-    ax1.plot(left_fitx, ploty, color='yellow')
-    ax1.plot(right_fitx, ploty, color='yellow')
-    ax1.xlim(0, 1280)
-    ax1.ylim(720, 0)
+    plt.imshow(out_img)
+    plt.plot(left_fitx, ploty, color='yellow')
+    plt.plot(right_fitx, ploty, color='yellow')
+    plt.xlim(0, 1280)
+    plt.ylim(720, 0)
 
 
 # def get_lane_polyfit(nonzerox, nonzeroy, )
