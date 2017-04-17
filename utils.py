@@ -524,3 +524,8 @@ def visualize_next_step(left_fitx, right_fitx, left_lane_inds, right_lane_inds, 
     result = cv2.addWeighted(out_img, 1, window_img, 0.3, 0)
 
     return result
+
+
+def get_curvature(poly_fit):
+    y_eval = np.max(ploty)
+    return ((1 + (2 * poly_fit[0] * y_eval + poly_fit[1])**2)**1.5) / np.absolute(2 * poly_fit[0])
