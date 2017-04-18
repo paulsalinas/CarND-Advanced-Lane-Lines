@@ -120,6 +120,7 @@ def get_distortion_vertices_from_image_shape(image_shape):
 def get_distortion_shape_from_image_shape(image_shape):
     """
     returns source and destination arrays from image shape
+    coords obtained from: https://github.com/hello2all/CarND-Advanced-Lane-Lines/blob/master/pipeline.py
     """
     img_size = image_shape
 
