@@ -6,6 +6,12 @@ import pickle
 
 
 def get_calibration_points(visualize=False):
+    """
+    return the object points in real world space and the 2d points in image plane
+    that will be used for the calibration.
+
+    this uses the calibration phots in ./camera_cal
+    """
     # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
     objp = np.zeros((6 * 9, 3), np.float32)
     objp[:, :2] = np.mgrid[0:9, 0:6].T.reshape(-1, 2)
@@ -43,6 +49,9 @@ def get_calibration_points(visualize=False):
 
 
 def undistorter_from_pickle(pickle_path):
+    """
+    return a distorter func from a pickle path
+    """
     dist = pickle.load(open(pickle_path, "rb"))["dist"]
     mtx = pickle.load(open(pickle_path, "rb"))["mtx"]
     return lambda img: cv2.undistort(img, mtx, dist, None, mtx)
@@ -51,15 +60,18 @@ def undistorter_from_pickle(pickle_path):
 def pipeline(img, s_thresh=(170, 255), sx_thresh=(20, 100)):
     """
     apply a sobel threshold in the x direction.
-    apply s channel threshold
+    apply a saturation channel threshold
+    apply a lightness channel threshold
     """
     img = np.copy(img)
     # Convert to HSV color space and separate the V channel
-    hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HLS).astype(np.float)
-    l_channel = hsv[:, :, 1]
-    s_channel = hsv[:, :, 2]
+    hls = cv2.cvtColor(img, cv2.COLOR_RGB2HLS).astype(np.float)
+    l_channel = hls[:, :, 1]
+    s_channel = hls[:, :, 2]
+
     # Sobel x
     sobelx = cv2.Sobel(l_channel, cv2.CV_64F, 1, 0)  # Take the derivative in x
+    
     # Absolute x derivative to accentuate lines away from horizontal
     abs_sobelx = np.absolute(sobelx)
     scaled_sobel = np.uint8(255 * abs_sobelx / np.max(abs_sobelx))
@@ -73,12 +85,6 @@ def pipeline(img, s_thresh=(170, 255), sx_thresh=(20, 100)):
     s_binary = np.zeros_like(s_channel)
     s_binary[(s_channel >= s_thresh[0]) & (s_channel <= s_thresh[1])] = 1
 
-    # Stack each channel
-    # Note color_binary[:, :, 0] is all 0s, effectively an all black image. It might
-    # be beneficial to replace this channel with something else.
-    # color_binary = np.dstack(( np.zeros_like(sxbinary), sxbinary, s_binary))
-    # return color_binary
-
     combined_binary = np.zeros_like(sxbinary)
     combined_binary[(s_binary == 1) | (sxbinary == 1)] = 1
     return combined_binary
@@ -88,17 +94,6 @@ def get_distortion_vertices_from_image_shape(image_shape):
     """
     get the region of interest for distortion usually for visualization
     """
-    # (h, w) = (image_shape[0], image_shape[1])
-
-    # vertices = np.array([
-    #     [
-    #         (w // 2 - 76, h * .625),
-    #         (w // 2 + 76, h * .625),
-    #         (w + 100, h),
-    #         (-100, h)
-    #     ]
-    # ], dtype=np.int32)
-
     img_size = image_shape
 
     ht_window = np.uint(img_size[0] / 1.5)
@@ -123,8 +118,9 @@ def get_distortion_vertices_from_image_shape(image_shape):
 
 
 def get_distortion_shape_from_image_shape(image_shape):
-    # (h, w) = (image_shape[0], image_shape[1])
-
+    """
+    returns source and destination arrays from image shape
+    """
     img_size = image_shape
 
     ht_window = np.uint(img_size[0] / 1.5)
@@ -149,16 +145,6 @@ def get_distortion_shape_from_image_shape(image_shape):
         [img_size[1], 0],
         [0, 0]
     ])
-
-    # src = np.float32([
-    #     [w // 2 - 76, h * .625],
-    #     [w // 2 + 76, h * .625],
-    #     [-100, h],
-    #     [w + 100, h]
-    # ])
-
-    # # Define corresponding destination points
-    # dst = np.float32([[100, 0], [w - 100, 0], [100, h], [w - 100, h]])
 
     return src, dst
 
@@ -187,6 +173,9 @@ def warper(img, src, dst):
 
 
 def get_drawable_lanes(left_fit, right_fit, binary_warped_shape):
+    """
+    obtain the corresponding x, y values for the right/left lines
+    """
     ploty = np.linspace(0, binary_warped_shape[0] - 1, binary_warped_shape[0])
 
     # drawable left_fit and right_fit
@@ -287,6 +276,9 @@ def sliding_windows_lane_pixels(binary_warped):
 
 
 def polyfit(leftx, lefty, rightx, righty):
+    """
+    get the polyfitted lines for left and right lines
+    """
     left_fit = np.polyfit(lefty, leftx, 2)
     right_fit = np.polyfit(righty, rightx, 2)
     return left_fit, right_fit
@@ -643,6 +635,10 @@ def visualize_next_step(left_fitx, right_fitx, left_lane_inds, right_lane_inds, 
     return result
 
 def calc_radius(binary_warped, leftx, lefty, rightx, righty):
+    """
+    get the left/right curvature values x/y values of lanes
+    kudos to: https://github.com/hello2all/CarND-Advanced-Lane-Lines/blob/master/pipeline.py
+    """
     y_eval = binary_warped.shape[0] - 1
     # Define conversions in x and y from pixels space to meters
     ym_per_pix = 15/720 # meters per pixel in y dimension
