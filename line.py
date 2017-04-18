@@ -1,4 +1,5 @@
 import numpy as np
+from collections import deque
 from utils import sliding_windows_lane_pixels, next_frame_search, polyfit, calc_radius
 
 
@@ -32,9 +33,8 @@ class LaneLines():
 
             left_fit, right_fit = polyfit(leftx, lefty, rightx, righty)
 
-            left_fit_curve, right_fit_curve = calc_radius(img, leftx, lefty, rightx, righty)
-
-            avg_curve = (left_fit_curve + right_fit_curve) / 2
+            left_fit_curve, right_fit_curve = calc_radius(
+                img, leftx, lefty, rightx, righty)
 
             # # assess
             # # do the curves make sense?
@@ -46,6 +46,7 @@ class LaneLines():
             # self.right_line.add_fit(right_fit)
             # else:
             #     self.sliding_window_search(img)
+
             self.left_line.add_fit(left_fit)
             self.right_line.add_fit(right_fit)
 
@@ -59,7 +60,8 @@ class LaneLines():
         self.left_line.add_fit(left_fit)
         self.right_line.add_fit(right_fit)
 
-        left_fit_curve, right_fit_curve = calc_radius(img, leftx, lefty, rightx, righty)
+        left_fit_curve, right_fit_curve = calc_radius(
+            img, leftx, lefty, rightx, righty)
 
         avg_curve = (left_fit_curve + right_fit_curve) / 2
 
@@ -69,13 +71,12 @@ class LaneLines():
 
 class Line():
     def __init__(self):
-        self.n = 5
 
         # was the line detected in the last iteration?
         self.detected = False
         # x values of the last n fits of the line
 
-        self.last_n_fits = []
+        self.last_n_fits = deque(iterable=[], maxlen=10)
 
         # polynomial coefficients averaged over the last n iterations
         self.best_fit = None
@@ -95,9 +96,4 @@ class Line():
     def add_fit(self, fit):
         self.current_fit = fit
         self.last_n_fits.append(fit)
-
-        # maintain the 'n' amount in our list
-        if len(self.last_n_fits) == self.n:
-            self.last_n_fits.pop(self.n - 1)
-
         self.best_fit = np.average(self.last_n_fits, axis=0)
