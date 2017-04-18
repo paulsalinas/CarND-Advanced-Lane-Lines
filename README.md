@@ -30,6 +30,13 @@ Here's an example of an image that underwent distortion correction:
 ![result of calibration](./images/calibration.png)
 
 ## Pipeline
+In addition to first undistorting the images, I applied a sobel filter in the x direction, and also filtered the 's' and 'l' channels of the image. From there, the image was converted to a binary image.
+
+The above is done in the [utils.py](utils.py) within the pipeline function.
+
+The result of this pipeline function is shown below:
+![result of calibration](./images/pipeline.png)
+
 ## Perspective Transform
 ## Line detection - Sliding Windows
 
