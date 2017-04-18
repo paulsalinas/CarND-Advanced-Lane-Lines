@@ -15,13 +15,18 @@ class LaneLines():
 
         left_fit = None
         right_fit = None
+        leftx = None
+        lefty = None
+        rightx = None
+        righty = None
 
         if not self.left_line.detected and not self.right_line.detected:
             # start with a sliding window search if no lines are detected
-            self.sliding_window_search(img)
+            leftx, lefty, rightx, righty = sliding_windows_lane_pixels(img)
+            left_fit, right_fit = polyfit(leftx, lefty, rightx, righty)
+
             self.left_line.detected = True
             self.right_line.detected = True
-            return
         else:
             # do a next frame search if lines are detected based on existing
             # fits
@@ -33,38 +38,40 @@ class LaneLines():
 
             left_fit, right_fit = polyfit(leftx, lefty, rightx, righty)
 
-            left_fit_curve, right_fit_curve = calc_radius(
-                img, leftx, lefty, rightx, righty)
-
-            # assess
-            # do the curves make sense? are they extreme?
-            def is_extreme_curve(curve): return curve < 0.1 or curve > 10
-
-            if (is_extreme_curve(left_fit_curve) or is_extreme_curve(right_fit_curve)):
-                self.left_line.detected = False
-                self.right_line.detected = False
-                return
-
-            self.left_line.add_fit(left_fit)
-            self.right_line.add_fit(right_fit)
-
-            self.left_line.radius_of_curvature = left_fit_curve
-            self.right_line.radius_of_curvature = right_fit_curve
-
-    def sliding_window_search(self, img):
-        leftx, lefty, rightx, righty = sliding_windows_lane_pixels(img)
-        left_fit, right_fit = polyfit(leftx, lefty, rightx, righty)
-
-        self.left_line.add_fit(left_fit)
-        self.right_line.add_fit(right_fit)
-
         left_fit_curve, right_fit_curve = calc_radius(
             img, leftx, lefty, rightx, righty)
 
-        avg_curve = (left_fit_curve + right_fit_curve) / 2
+        # assess
+        # do the curves make sense? are they extreme?
+        def is_extreme_curve(curve): return curve < 0.1 or curve > 10000
+
+        if (is_extreme_curve(left_fit_curve) or is_extreme_curve(right_fit_curve)) and (self.left_line.best_fit != None or self.right_line.best_fit != None):
+            self.left_line.detected = False
+            self.right_line.detected = False
+            return
+
+        # we've passed the sanity checks, let's add the new line
+        self.left_line.add_fit(left_fit)
+        self.right_line.add_fit(right_fit)
 
         self.left_line.radius_of_curvature = left_fit_curve
         self.right_line.radius_of_curvature = right_fit_curve
+
+    # def sliding_window_search(self, img):
+    #     leftx, lefty, rightx, righty = sliding_windows_lane_pixels(img)
+    #     left_fit, right_fit = polyfit(leftx, lefty, rightx, righty)
+    #
+    #     self.left_line.add_fit(left_fit)
+    #     self.right_line.add_fit(right_fit)
+    #
+    #     left_fit_curve, right_fit_curve = calc_radius(
+    #         img, leftx, lefty, rightx, righty)
+    #
+    #     avg_curve = (left_fit_curve + right_fit_curve) / 2
+    #
+    #     self.left_line.radius_of_curvature = left_fit_curve
+    #     self.right_line.radius_of_curvature = right_fit_curve
+    #
 
 
 class Line():
