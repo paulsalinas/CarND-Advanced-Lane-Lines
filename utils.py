@@ -652,3 +652,19 @@ def calc_radius(binary_warped, leftx, lefty, rightx, righty):
     right_curverad = ((1 + (2*right_fit_cr[0]*y_eval*ym_per_pix + right_fit_cr[1])**2)**1.5) / np.absolute(2*right_fit_cr[0])
 
     return left_curverad, right_curverad
+
+def calc_offset(binary_warped, left_fit, right_fit):
+    """
+    get position of the vehicle with respect to center
+    kudos to: https://github.com/hello2all/CarND-Advanced-Lane-Lines/blob/master/pipeline.py
+    """
+    y_eval = binary_warped.shape[0] - 1
+    xm_per_pix = 3.7/920 # meters per pixel in x dimension
+
+    # get the x value at the bottom of the image
+    bottom_left_x = np.polyval(left_fit, y_eval)
+    bottom_right_x = np.polyval(right_fit, y_eval)
+    
+    # calculate the realworld image distance of the camera
+    offset = (binary_warped.shape[1]/2 - (bottom_left_x + bottom_right_x)/2) * xm_per_pix
+    return offset
