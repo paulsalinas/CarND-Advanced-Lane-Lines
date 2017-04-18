@@ -36,16 +36,14 @@ class LaneLines():
             left_fit_curve, right_fit_curve = calc_radius(
                 img, leftx, lefty, rightx, righty)
 
-            # # assess
-            # # do the curves make sense?
-            # abs_radius = abs(left_fit_curve - right_fit_curve)
+            # assess
+            # do the curves make sense? are they extreme?
+            def is_extreme_curve(curve): return curve < 0.1 or curve > 10
 
-            # # are the curves similar given a certain tolerance?
-            # if abs_radius < 1000:
-            # self.left_line.add_fit(left_fit)
-            # self.right_line.add_fit(right_fit)
-            # else:
-            #     self.sliding_window_search(img)
+            if (is_extreme_curve(left_fit_curve) or is_extreme_curve(right_fit_curve)):
+                self.left_line.detected = False
+                self.right_line.detected = False
+                return
 
             self.left_line.add_fit(left_fit)
             self.right_line.add_fit(right_fit)
