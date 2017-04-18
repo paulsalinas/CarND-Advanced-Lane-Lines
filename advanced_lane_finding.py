@@ -52,6 +52,7 @@ ax1.imshow(img)
 ax1.set_title('Original Image', fontsize=30)
 ax2.imshow(dst)
 ax2.set_title('Undistorted Image', fontsize=30)
+f.savefig('calibration.png')
 
 
 ##
@@ -77,6 +78,7 @@ transformed = pipeline(
 f, (ax2) = plt.subplots(1, figsize=(24, 9))
 f.tight_layout()
 ax2.imshow(transformed, cmap='gray')
+f.savefig('pipeline.png')
 
 ##
 # visualize the region of interest and the warped result
@@ -92,13 +94,14 @@ vertices = get_distortion_vertices_from_image_shape(image.shape)
 
 cv2.polylines(image, vertices, True, [255, 0, 255], 4)
 
-warped = warper(image)
+warped, Minv = warper(image)
 
 f, (ax1, ax2) = plt.subplots(1, 2, figsize=(24, 9))
 
 f.tight_layout()
 ax2.imshow(warped)
 ax1.imshow(image)
+f.savefig('warper.png')
 
 ##
 # combine the pipeline and then the warping of the image
@@ -107,9 +110,10 @@ ax1.imshow(image)
 #%%
 image = pipeline(undistort_img(cv2.imread(
     './test_images/straight_lines1.jpg')))
-warped = warper(image)
+warped, _ = warper(image)
 f, (ax1) = plt.subplots(1, figsize=(24, 9))
 ax1.imshow(warped, cmap="gray")
+f.savefig('pipe_warp.png')
 
 ##
 # show a histogram of a cross section of the image
@@ -118,6 +122,7 @@ ax1.imshow(warped, cmap="gray")
 histogram = np.sum(warped[360:, :], axis=0)
 f, (ax1) = plt.subplots(1, figsize=(24, 9))
 ax1.plot(histogram)
+f.savefig('histogram.png')
 
 ##
 # sliding window search
@@ -134,20 +139,18 @@ left_fitx, right_fitx, ploty = get_drawable_lanes(
     warped.shape
 )
 
-visualize_sliding_window(
-    out_img,
-    left_lane_inds,
-    right_lane_inds,
-    nonzerox,
-    nonzeroy,
-    left_fitx,
-    right_fitx,
-    ploty
-)
+out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]
+out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 255]
 
-print(left_lane_inds)
-print(nonzerox)
-print(left_fit)
+f, (ax1) = plt.subplots(1, figsize=(24, 9))
+
+ax1.imshow(out_img)
+ax1.plot(left_fitx, ploty, color='yellow')
+ax1.plot(right_fitx, ploty, color='yellow')
+f.savefig('sliding_window.png')
+# ax1.xlim(0, 1280)
+# ax1.ylim(720, 0)
+
 
 #%%
 from utils import sliding_windows_lane_pixels

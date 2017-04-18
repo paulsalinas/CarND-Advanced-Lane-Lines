@@ -179,10 +179,11 @@ def warper(img, src, dst):
     # Compute and apply perpective transform
     img_size = (img.shape[1], img.shape[0])
     M = cv2.getPerspectiveTransform(src, dst)
+    MinV =  cv2.getPerspectiveTransform(dst, src)
     # keep same size as input image
     warped = cv2.warpPerspective(img, M, img_size, flags=cv2.INTER_NEAREST)
 
-    return warped
+    return warped, MinV
 
 
 def get_drawable_lanes(left_fit, right_fit, binary_warped_shape):
@@ -192,20 +193,6 @@ def get_drawable_lanes(left_fit, right_fit, binary_warped_shape):
     left_fitx = left_fit[0] * ploty**2 + left_fit[1] * ploty + left_fit[2]
     right_fitx = right_fit[0] * ploty**2 + right_fit[1] * ploty + right_fit[2]
     return left_fitx, right_fitx, ploty
-
-
-def visualize_sliding_window(out_img, left_lane_inds, right_lane_inds, nonzerox, nonzeroy, left_fitx, right_fitx, ploty):
-    # plot this seperately
-    out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]
-    out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 255]
-
-    # f, (ax1) = plt.subplots(1, figsize=(24, 9))
-
-    plt.imshow(out_img)
-    plt.plot(left_fitx, ploty, color='yellow')
-    plt.plot(right_fitx, ploty, color='yellow')
-    plt.xlim(0, 1280)
-    plt.ylim(720, 0)
 
 
 def sliding_windows_lane_pixels(binary_warped):

@@ -43,7 +43,7 @@ class LaneLines():
 
         # assess
         # do the curves make sense? are they extreme?
-        def is_extreme_curve(curve): return curve < 0.1 or curve > 10000
+        def is_extreme_curve(curve): return curve < 100 or curve > 10000
 
         if (is_extreme_curve(left_fit_curve) or is_extreme_curve(right_fit_curve)) and (self.left_line.best_fit != None or self.right_line.best_fit != None):
             self.left_line.detected = False
