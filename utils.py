@@ -50,8 +50,8 @@ def undistorter_from_pickle(pickle_path):
 
 def pipeline(img, s_thresh=(170, 255), sx_thresh=(20, 100)):
     """
-    apply a sobel threshold in the x direction. 
-    apply s channel threshold  
+    apply a sobel threshold in the x direction.
+    apply s channel threshold
     """
     img = np.copy(img)
     # Convert to HSV color space and separate the V channel
@@ -343,7 +343,7 @@ def next_frame_search(left_fit, right_fit, binary_warped):
 def sliding_windows(binary_warped):
     """
     takes a warped image and returns values visualization of the sliding window and for fitted lines
-    (used mainly to help with visualization)  
+    (used mainly to help with visualization)
     """
 
     # Assuming you have created a warped binary image called "binary_warped"
@@ -655,8 +655,17 @@ def visualize_next_step(left_fitx, right_fitx, left_lane_inds, right_lane_inds, 
 
     return result
 
+def calc_radius(binary_warped, leftx, lefty, rightx, righty):
+    y_eval = binary_warped.shape[0] - 1
+    # Define conversions in x and y from pixels space to meters
+    ym_per_pix = 15/720 # meters per pixel in y dimension
+    xm_per_pix = 3.7/920 # meters per pixel in x dimension
 
-def get_curvature(poly_fit):
-    ploty = np.linspace(0, 719, num=720)
-    y_eval = np.max(ploty)
-    return ((1 + (2 * poly_fit[0] * y_eval + poly_fit[1])**2)**1.5) / np.absolute(2 * poly_fit[0])
+    # Fit new polynomials to x,y in world space
+    left_fit_cr = np.polyfit(lefty*ym_per_pix, leftx*xm_per_pix, 2)
+    right_fit_cr = np.polyfit(righty*ym_per_pix, rightx*xm_per_pix, 2)
+    # Calculate the new radius of curvature in meters
+    left_curverad = ((1 + (2*left_fit_cr[0]*y_eval*ym_per_pix + left_fit_cr[1])**2)**1.5) / np.absolute(2*left_fit_cr[0])
+    right_curverad = ((1 + (2*right_fit_cr[0]*y_eval*ym_per_pix + right_fit_cr[1])**2)**1.5) / np.absolute(2*right_fit_cr[0])
+
+    return left_curverad, right_curverad

@@ -1,5 +1,5 @@
 import numpy as np
-from utils import sliding_windows_lane_pixels, next_frame_search, polyfit, get_curvature
+from utils import sliding_windows_lane_pixels, next_frame_search, polyfit, calc_radius
 
 
 class LaneLines():
@@ -32,8 +32,9 @@ class LaneLines():
 
             left_fit, right_fit = polyfit(leftx, lefty, rightx, righty)
 
-            left_fit_curve = get_curvature(left_fit)
-            right_fit_curve = get_curvature(right_fit)
+            left_fit_curve, right_fit_curve = calc_radius(img, leftx, lefty, rightx, righty)
+
+            avg_curve = (left_fit_curve + right_fit_curve) / 2
 
             # # assess
             # # do the curves make sense?
@@ -48,6 +49,9 @@ class LaneLines():
             self.left_line.add_fit(left_fit)
             self.right_line.add_fit(right_fit)
 
+            self.left_line.radius_of_curvature = left_fit_curve
+            self.right_line.radius_of_curvature = right_fit_curve
+
     def sliding_window_search(self, img):
         leftx, lefty, rightx, righty = sliding_windows_lane_pixels(img)
         left_fit, right_fit = polyfit(leftx, lefty, rightx, righty)
@@ -55,13 +59,17 @@ class LaneLines():
         self.left_line.add_fit(left_fit)
         self.right_line.add_fit(right_fit)
 
-        self.left_line.radius_of_curvature = get_curvature(left_fit)
-        self.right_line.radius_of_curvature = get_curvature(right_fit)
+        left_fit_curve, right_fit_curve = calc_radius(img, leftx, lefty, rightx, righty)
+
+        avg_curve = (left_fit_curve + right_fit_curve) / 2
+
+        self.left_line.radius_of_curvature = left_fit_curve
+        self.right_line.radius_of_curvature = right_fit_curve
 
 
 class Line():
     def __init__(self):
-        self.n = 2
+        self.n = 5
 
         # was the line detected in the last iteration?
         self.detected = False
